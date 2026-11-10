@@ -1,0 +1,12 @@
+﻿WP Panel 助手 隐私说明与许可
+
+隐私说明
+- 不收集使用统计，不上报崩溃，不上传服务器信息、密码或终端内容。
+- 软件只连接你自己的服务器（SSH 连接和 8443 端口检测）。
+- 唯一的例外是检查更新：软件启动时读取一个公开的版本信息文件（先访问 GitHub，失败再访问国内加速地址 gh.wp-panel.org），不发送任何设备信息。可以在软件首页取消"启动时自动检查更新"。
+- 勾选"记住密码"并登录成功后，密码保存在 Windows 凭据管理器中。
+- 完整隐私政策：https://wp-panel.org/assistant/privacy/
+
+开源许可
+本软件以 GNU 通用公共许可证第 3 版（GPL-3.0）开源免费发布，基于 Tabby（MIT 许可证）。源代码：https://github.com/naibabiji/wp-panel-assistant
+许可证全文和第三方组件许可证在安装目录的 LICENSE.txt、LICENSE.tabby.txt 和 THIRD-PARTY-NOTICES.txt 中。

@@ -6,7 +6,7 @@ import { ConfigService, PlatformService } from 'tabby-core'
 import { GITHUB_RELEASES_URL, WEBSITE_URL } from './links'
 
 /**
- * Update notice (design confirmed 2026-11-10, docs/work/active/2026-11-10-public-release-design.md):
+ * Update notice (design confirmed 2026-11-10, docs/features/update-notice.md):
  * read the public latest.json, and if it names a newer version, show it on the home page with two download links.
  * Nothing is downloaded or installed by the app; no device information is sent.
  */

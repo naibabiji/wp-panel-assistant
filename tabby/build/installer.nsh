@@ -1,6 +1,5 @@
-!macro customInit
-  nsExec::Exec '"$LOCALAPPDATA\tabby\Update.exe" --uninstall -s'
-!macroend
+; WPPA: removed upstream customInit, which silently uninstalled an old Squirrel-based Tabby
+; ("%LOCALAPPDATA%\tabby\Update.exe --uninstall -s") - not ours to remove (2026-11-10, ADR-0005).
 
 !macro customInstall
   ; Install Visual C++ Redistributable if vcruntime140.dll is missing.

@@ -1,0 +1,12 @@
+﻿WP Panel Assistant - privacy notice and license
+
+Privacy
+- No usage statistics, no crash reports. Server details, passwords and terminal content are never uploaded.
+- The app connects only to your own server (SSH and a check of port 8443).
+- The only exception is the update check: at startup the app reads a public version file (from GitHub, or from the mirror gh.wp-panel.org if GitHub cannot be reached). No device information is sent. You can turn off "Check for updates at startup" on the home page.
+- If you tick "Remember password" and the login succeeds, the password is stored in Windows Credential Manager.
+- Full privacy policy: https://wp-panel.org/assistant/privacy/
+
+License
+This software is free and open source under the GNU General Public License v3.0 (GPL-3.0). It is based on Tabby (MIT License). Source code: https://github.com/naibabiji/wp-panel-assistant
+The full license texts and third-party notices are in LICENSE.txt, LICENSE.tabby.txt and THIRD-PARTY-NOTICES.txt in the installation folder.
