@@ -1,0 +1,15 @@
+{
+  "extends": "../tsconfig.json",
+  "exclude": ["node_modules", "dist", "typings"],
+  "compilerOptions": {
+    "baseUrl": "src",
+    "emitDeclarationOnly": true,
+    "declaration": true,
+    "declarationDir": "./typings",
+    "paths": {
+      "tabby-electron": ["../../tabby-electron/typings/tabby-electron/src"],
+      "tabby-*": ["../../tabby-*"],
+      "*": ["../../app/node_modules/*"]
+    }
+  }
+}

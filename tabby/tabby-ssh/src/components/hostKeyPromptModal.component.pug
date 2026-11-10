@@ -1,0 +1,63 @@
+//- WP Panel Assistant: beginner-friendly host key prompt (ADR-0005 item 1, stage 2).
+.modal-header
+    h3.m-0(*ngIf='!isMismatched') {{ t('unknownTitle') }}
+    h3.m-0.text-danger(*ngIf='isMismatched') ⚠ {{ t('changedTitle') }}
+
+.modal-body.pt-0
+    ng-container(*ngIf='!isMismatched')
+        p {{ t('unknownBody') }}
+        .mb-3
+            .d-flex.align-items-center
+                label {{ t('serverFingerprint') }}
+                .badge.text-bg-secondary.ms-auto {{ selector.type }}
+            code.d-block.text-break {{ format(digest) }}
+        p.text-muted.mb-0 {{ t('unknownHint') }}
+
+    ng-container(*ngIf='isMismatched')
+        p {{ t('changedBody') }}
+        div {{ t('changedCauses') }}
+        ul
+            li {{ t('causeReinstall') }}
+            li {{ t('causeNewServer') }}
+            li {{ t('causeMigration') }}
+        .alert.alert-danger {{ t('changedRisk') }}
+
+        .mb-3
+            .d-flex.align-items-center
+                label {{ t('lastFingerprint') }}
+                .badge.text-bg-secondary.ms-auto {{ selector.type }}
+            code.d-block.text-break {{ format(knownHost?.digest) }}
+
+        .mb-3
+            .d-flex.align-items-center
+                label {{ t('newFingerprint') }}
+                .badge.text-bg-danger.ms-auto {{ selector.type }}
+            code.d-block.text-break {{ format(digest) }}
+
+    .text-danger.mt-3(*ngIf='saveError') {{ saveError }}
+
+.modal-footer
+    .w-100(*ngIf='!isMismatched')
+        button.d-block.w-100.mb-3.btn.btn-primary(
+            ngbAutofocus,
+            (click)='acceptAndSave()',
+            [disabled]='saving'
+        ) {{ t('trustAndConnect') }}
+        button.d-block.w-100.btn.btn-secondary(
+            (click)='cancel()'
+        ) {{ t('cancel') }}
+
+    .w-100(*ngIf='isMismatched')
+        //- In the footer so it stays next to the button it unlocks, even when the body scrolls.
+        checkbox.d-block.mb-3#hostKeyConfirmChange(
+            [text]='t("confirmChange")',
+            [(ngModel)]='confirmed'
+        )
+        button.d-block.w-100.mb-3.btn.btn-primary(
+            ngbAutofocus,
+            (click)='cancel()'
+        ) {{ t('disconnect') }}
+        button.d-block.w-100.btn.btn-danger(
+            (click)='acceptAndSave()',
+            [disabled]='!confirmed || saving'
+        ) {{ t('updateAndConnect') }}

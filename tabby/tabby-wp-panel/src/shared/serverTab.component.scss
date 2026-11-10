@@ -1,0 +1,61 @@
+// Type scale shared by WP Panel Assistant pages (px, matched to Tabby's 14px body text and tab titles):
+// page title 18, status 14 (same as tab titles), body 13, hints 12. Chinese glyphs look larger than Latin at the same size,
+// so body text stays at 13.
+:host { display: block; font-size: 13px; }
+.wpp-install { width: 100%; padding: 12px 18px 20px; }
+.wpp-steps { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; font-size: 12px; opacity: .7; }
+.wpp-steps .active { font-weight: 600; opacity: 1; color: #1eaa7f; }
+.wpp-steps .sep { opacity: .5; }
+
+// ---- Form / confirm ----
+.wpp-form { max-width: 680px; margin: 0 auto; }
+.wpp-form h2 { font-size: 18px; font-weight: 600; margin: 0 0 10px; }
+.wpp-notice { padding: 8px 12px; margin-bottom: 14px; border-radius: 6px; font-size: 12px; line-height: 1.6;
+  border: 1px solid rgba(13, 110, 253, .35); background: rgba(13, 110, 253, .08); }
+.wpp-row { display: flex; gap: 12px; flex-wrap: wrap; }
+.wpp-field { margin-bottom: 10px; min-width: 0; }
+.wpp-field > label { display: block; font-weight: 600; margin-bottom: 3px; }
+.wpp-grow { flex: 1 1 220px; }
+.wpp-port-field { flex: 0 0 96px; }
+.wpp-user-field { flex: 0 1 150px; }
+.wpp-half { flex: 1 1 260px; }
+.wpp-row-notes { margin: -4px 0 10px; }
+.wpp-label-offset { margin-top: 22px; }
+.wpp-radios { display: flex; gap: 18px; flex-wrap: wrap; padding-top: 4px; }
+.form-control { font-size: 13px; padding: 4px 8px; border: 1px solid rgba(127,127,127,.45); } // light theme has no input border
+.form-control::placeholder { opacity: .45; }
+.wpp-error { color: #dc3545; font-size: 12px; margin-top: 3px; }
+.wpp-hint { font-size: 12px; opacity: .75; margin-top: 3px; }
+.wpp-help { display: inline-block; font-size: 12px; margin-top: 3px; }
+.wpp-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+.btn { font-size: 13px; }
+.wpp-command { white-space: pre-wrap; word-break: break-all; user-select: text; padding: 8px 10px; border-radius: 6px; background: rgba(127,127,127,.12); font-size: 12px; max-height: 200px; overflow-y: auto; }
+.wpp-form ol { padding-left: 20px; margin-bottom: 8px; }
+.alert { font-size: 13px; padding: 8px 12px; }
+// The upstream light theme draws warning boxes dark olive with yellow text.
+.alert-warning { background: rgba(255, 193, 7, .15); color: inherit; border-color: rgba(255, 193, 7, .6); }
+
+// ---- Install guide (left pane) ----
+.wpp-guide { line-height: 1.55; }
+.wpp-guide h6 { font-size: 13px; font-weight: 600; margin: 12px 0 4px; }
+.wpp-status { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; margin-bottom: 6px; }
+.wpp-status .text-muted { font-size: 12px; font-weight: normal; }
+.wpp-dot { width: 9px; height: 9px; border-radius: 50%; background: #1eaa7f; animation: wpp-pulse 1.4s infinite; flex: none; }
+@keyframes wpp-pulse { 50% { opacity: .3; } }
+.wpp-next, .wpp-trouble { padding-left: 18px; margin-bottom: 4px; }
+.wpp-next li, .wpp-trouble li { margin-bottom: 6px; }
+.wpp-next li div { font-size: 12px; }
+.wpp-trouble { font-size: 12px; }
+.wpp-port { margin-top: 6px; font-weight: 600; }
+
+// ---- Manage page (stage 4) ----
+.wpp-switch { font-size: 12px; font-weight: normal; }
+.wpp-action-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(116px, 1fr)); gap: 6px; margin: 8px 0 12px; }
+.wpp-action { display: flex; flex-direction: column; align-items: flex-start; text-align: left; gap: 2px; padding: 6px 8px;
+  border-radius: 8px; border: 1px solid rgba(127,127,127,.3); background: rgba(127,127,127,.08); color: inherit; cursor: pointer; }
+.wpp-action:hover:not([disabled]) { background: rgba(127,127,127,.16); border-color: #1eaa7f; }
+.wpp-action[disabled] { opacity: .5; cursor: default; }
+.wpp-action.danger .wpp-action-label { color: #dc3545; }
+.wpp-action-label { font-weight: 600; font-size: 13px; }
+.wpp-action-desc { font-size: 12px; opacity: .75; }
+.wpp-last { padding: 8px 10px; border-radius: 6px; background: rgba(30,170,127,.08); border: 1px solid rgba(30,170,127,.35); font-size: 12px; }

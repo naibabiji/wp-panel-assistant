@@ -1,0 +1,20 @@
+//- Shared connection states (connecting / unreachable / failed). `tab` is the page (ServerTabBase).
+ng-container(*ngIf='tab.state === "connecting"')
+    .wpp-status
+        i.fas.fa-spinner.fa-spin
+        | {{ tab.s('statusConnecting') }}
+    .wpp-actions
+        button.btn.btn-secondary((click)='tab.backToForm()') {{ tab.s('back') }}
+
+ng-container(*ngIf='tab.state === "unreachable"')
+    .alert.alert-danger#wpp-unreachable {{ tab.s('unreachable', tab.hostTrimmed + ':' + tab.port) }}
+    .wpp-actions
+        button.btn.btn-primary((click)='tab.retryConnect()') {{ tab.s('retry') }}
+        button.btn.btn-secondary((click)='tab.backToForm()') {{ tab.s('back') }}
+
+ng-container(*ngIf='tab.state === "connectFailed"')
+    .alert.alert-danger#wpp-connect-failed {{ tab.s('connectFailed') }}
+    .wpp-actions
+        button.btn.btn-primary#wpp-retry((click)='tab.retryConnect()') {{ tab.s('retry') }}
+        button.btn.btn-secondary((click)='tab.backToForm()') {{ tab.s('back') }}
+

@@ -1,0 +1,27 @@
+
+.mt-auto.mb-auto
+    .tabby-logo
+    h1.tabby-title WP Panel Assistant
+
+    .list-group.mb-4
+        a.list-group-item.list-group-item-action.d-flex.pt-3.pb-3(
+            *ngFor='let command of commands; trackBy: buttonsTrackBy',
+            (click)='command.run()',
+        )
+            .d-flex.align-self-center([innerHTML]='sanitizeIcon(command.icon)')
+            span {{command.label}}
+
+footer.d-flex.align-items-center
+    .btn-group.me-auto
+        //- WPPA: links point to the WP Panel website
+        button.btn.btn-link((click)='homeBase.openGitHub()')
+            i.fas.fa-globe
+            span 官网 / Website
+        button.btn.btn-link((click)='homeBase.openDiscord()')
+            i.fas.fa-life-ring
+            span 帮助中心 / Help Center
+
+    .form-control-static.selectable.no-drag(
+        translate='Version: {version}',
+        [translateParams]='{ version: this.homeBase.appVersion }'
+    )

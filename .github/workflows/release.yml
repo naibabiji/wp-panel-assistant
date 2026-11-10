@@ -1,0 +1,164 @@
+# WP Panel Assistant - official Windows release build.
+# - Push a tag vX.Y.Z (public repository): build, test, check, then create a DRAFT GitHub Release with the installer
+#   and SHA256SUMS. The maintainer installs the draft build and publishes the release by hand.
+# - Manual run (workflow_dispatch): same build and checks, installer uploaded as a workflow artifact only.
+# Supply chain (review WPPA-003): actions pinned to commit hashes, exact Node / yarn / node-gyp versions,
+# Visual C++ redistributable accepted only with a valid Microsoft signature. Code signing: added after SignPath approval.
+name: Release (Windows)
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-x64:
+    runs-on: windows-2022
+    timeout-minutes: 120
+    permissions:
+      contents: write # create the draft release (tag builds only)
+    defaults:
+      run:
+        working-directory: tabby
+        shell: powershell
+    env:
+      ARCH: x64
+      RUST_TARGET_TRIPLE: x86_64-pc-windows-msvc
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Install Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22.22.3 # the locked node-gyp 13 requires >= 22.22.2
+
+      - name: Determine version
+        run: |
+          $pkg = (Get-Content tabby-wp-panel\package.json -Raw | ConvertFrom-Json).version
+          if ($env:GITHUB_REF_TYPE -eq "tag") {
+            $tag = $env:GITHUB_REF_NAME
+            if ($tag -ne "v$pkg") { throw "Tag $tag does not match tabby-wp-panel/package.json version $pkg" }
+            if ($pkg -match '-(local|dev)\.') { throw "Release version must not contain -local. or -dev. (test install switch, review WPPA-001)" }
+            $version = $pkg
+          } else {
+            $version = "$pkg-dev.$env:GITHUB_RUN_NUMBER"
+          }
+          "WPPA_VERSION=$version" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+          Write-Host "Version: $version"
+
+      - name: Install build tools (exact versions)
+        run: |
+          rustup target add x86_64-pc-windows-msvc
+          npm install --global yarn@1.22.22 node-gyp@10.2.0
+          if ($LASTEXITCODE -ne 0) { throw "npm install failed" }
+          npm prefix -g | % {npm config set node_gyp "$_\node_modules\node-gyp\bin\node-gyp.js"}
+
+      - name: Download Visual C++ Redistributable (signature checked)
+        run: |
+          curl.exe -sSL --fail -o build\vc_redist.exe "https://aka.ms/vs/17/release/vc_redist.x64.exe"
+          if ($LASTEXITCODE -ne 0) { throw "download failed" }
+          $sig = Get-AuthenticodeSignature build\vc_redist.exe
+          if ($sig.Status -ne "Valid" -or $sig.SignerCertificate.Subject -notmatch "O=Microsoft Corporation") {
+            throw "vc_redist.exe signature invalid: $($sig.Status) $($sig.SignerCertificate.Subject)"
+          }
+          Write-Host "Signed by: $($sig.SignerCertificate.Subject)"
+          (Get-FileHash build\vc_redist.exe -Algorithm SHA256).Hash
+
+      - name: Build UAC helper
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $msbuild = & $vswhere -latest -requires Microsoft.Component.MSBuild -find MSBuild\**\Bin\MSBuild.exe | Select-Object -First 1
+          if (-not $msbuild) { throw "MSBuild not found" }
+          & $msbuild tabby-uac\UAC.sln /p:Configuration=Release /p:Platform=x64 /p:PlatformToolset=v143 /p:WindowsTargetPlatformVersion=10.0 /verbosity:minimal
+          if ($LASTEXITCODE -ne 0) { throw "UAC build failed" }
+          $built = Get-ChildItem tabby-uac -Recurse -Filter UAC.exe | Where-Object { $_.FullName -match '\\Release\\' } | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+          if (-not $built) { throw "UAC.exe not found after build" }
+          Copy-Item $built.FullName extras\UAC.exe -Force
+
+      - name: Install dependencies (lockfile only)
+        run: |
+          yarn --frozen-lockfile --network-timeout 1000000
+          if ($LASTEXITCODE -ne 0) { throw "yarn install failed" }
+
+      - name: Lint and unit tests
+        run: |
+          # Same as `yarn run lint` (eslint --ext ts */src */lib); Windows shells do not expand */src, so list the folders.
+          # Plugins not shipped (ADR-0005: serial, telnet, plugin manager) have no dependencies installed, so skip them.
+          $skip = @("tabby-serial", "tabby-telnet", "tabby-plugin-manager")
+          $dirs = Get-ChildItem -Directory | Where-Object { $skip -notcontains $_.Name } | ForEach-Object { foreach ($s in "src", "lib") { $p = "$($_.Name)/$s"; if (Test-Path $p) { $p } } }
+          npx eslint --ext ts $dirs
+          if ($LASTEXITCODE -ne 0) { throw "lint failed" }
+          yarn run test:ssh-term
+          if ($LASTEXITCODE -ne 0) { throw "test:ssh-term failed" }
+          yarn run test:unit
+          if ($LASTEXITCODE -ne 0) { throw "test:unit failed" }
+
+      - name: Build
+        run: |
+          yarn run build
+          if ($LASTEXITCODE -ne 0) { throw "build failed" }
+          node scripts/prepackage-plugins.mjs
+          if ($LASTEXITCODE -ne 0) { throw "prepackage failed" }
+          node ../tools/generate-license-files.cjs
+          if ($LASTEXITCODE -ne 0) { throw "license files failed" }
+
+      - name: Package (unsigned until SignPath is set up)
+        run: |
+          node scripts/build-windows.mjs
+          if ($LASTEXITCODE -ne 0) { throw "packaging failed" }
+
+      - name: Check package contents
+        run: |
+          $dir = "dist\win-unpacked"
+          foreach ($f in @("LICENSE.txt", "LICENSE.tabby.txt", "THIRD-PARTY-NOTICES.txt", "LICENSE.electron.txt", "LICENSES.chromium.html")) {
+            if (-not (Test-Path (Join-Path $dir $f))) { throw "missing $f in $dir" }
+          }
+          if (Get-ChildItem $dir -Recurse -Filter app-update.yml) { throw "app-update.yml must not be packaged (no auto-update)" }
+          $files = Get-ChildItem (Join-Path $dir "resources") -Recurse -File
+          # Test passwords and upstream telemetry / crash reporting endpoints: nowhere in the app.
+          # "wppa-test-" prefix covers the local test container passwords without spelling them out here.
+          $hits = @($files | Select-String -SimpleMatch -Pattern @("wppa-test-", "api.mixpanel.com", "sentry.io") -List)
+          $keyWord = "PRIVATE " + "KEY" # split so the public-export scan does not flag this workflow itself
+          # Private keys: in our own code only. Third-party packages contain key-format parsers (russh binaries) and
+          # public test fixtures (winston), which are not secrets.
+          $hits += @($files | Where-Object { $_.FullName -notmatch '\\node_modules\\' -and $_.Extension -ne ".node" } |
+            Select-String -Pattern "BEGIN [A-Z ]*$keyWord" -List)
+          # Upstream links: accepted residual is only the inert config-sync host check (api.tabby.sh / app.tabby.sh;
+          # the config sync UI is removed, ADR-0005). Any other tabby.sh address fails.
+          $hits += @($files | Where-Object { $_.Extension -ne ".map" } | Select-String -Pattern 'tabby\.sh' -AllMatches |
+            Where-Object { $_.Line -notmatch '(api|app)\.tabby\.sh' -and $_.Line -notmatch 'removed the "working directory detection" tip' })
+          if ($hits.Count) { $hits | ForEach-Object { Write-Host "$($_.Path):$($_.LineNumber): $($_.Pattern)" }; throw "sensitive content found in package" }
+          Write-Host "Package checks passed"
+
+      - name: Checksums
+        run: |
+          Get-ChildItem dist -File | Where-Object { $_.Extension -in ".exe", ".zip" } | ForEach-Object {
+            "$((Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower())  $($_.Name)"
+          } | Out-File -Encoding ascii dist\SHA256SUMS.txt
+          Get-Content dist\SHA256SUMS.txt
+
+      - name: Upload build
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: wp-panel-assistant-windows-x64-${{ env.WPPA_VERSION }}
+          path: |
+            tabby/dist/*.exe
+            tabby/dist/*.zip
+            tabby/dist/SHA256SUMS.txt
+          retention-days: 14
+          if-no-files-found: error
+
+      - name: Create draft release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $files = Get-ChildItem dist -File | Where-Object { $_.Extension -in ".exe", ".zip" -or $_.Name -eq "SHA256SUMS.txt" } | ForEach-Object { $_.FullName }
+          gh release create $env:GITHUB_REF_NAME $files --repo $env:GITHUB_REPOSITORY --draft --title "WP Panel Assistant $env:WPPA_VERSION" --notes "Draft: release notes to be added before publishing."
+          if ($LASTEXITCODE -ne 0) { throw "gh release create failed" }

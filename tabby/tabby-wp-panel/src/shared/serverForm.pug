@@ -1,0 +1,63 @@
+//- Shared server form (install wizard and manage page). `tab` is the page (ServerTabBase).
+//- Row: address | port | username
+.wpp-row
+    .wpp-field.wpp-grow
+        label(for='wpp-host') {{ tab.s('fieldHost') }}
+        input.form-control#wpp-host([(ngModel)]='tab.host', autocomplete='off', spellcheck='false', [placeholder]='tab.s("hostPlaceholder")')
+    .wpp-field.wpp-port-field
+        label(for='wpp-port') {{ tab.s('fieldPort') }}
+        input.form-control#wpp-port(type='number', [(ngModel)]='tab.port')
+    .wpp-field.wpp-user-field
+        label(for='wpp-user') {{ tab.s('fieldUser') }}
+        input.form-control#wpp-user([(ngModel)]='tab.user', autocomplete='off', spellcheck='false')
+.wpp-row-notes
+    .wpp-error(*ngIf='tab.errors.host') {{ tab.s(tab.errors.host) }}
+    .wpp-error(*ngIf='tab.errors.port') {{ tab.s(tab.errors.port) }}
+    .wpp-error(*ngIf='tab.errors.user') {{ tab.s(tab.errors.user) }}
+    a.wpp-help(href='#', (click)='tab.openGuide($event)') {{ tab.s('whereToFind') }}
+    .wpp-hint(*ngIf='tab.user.trim() && !tab.isRoot') {{ tab.s(tab.sudoHintKey) }}
+
+//- Row: sign-in method | server location
+.wpp-row
+    .wpp-field.wpp-half
+        label {{ tab.s('fieldAuth') }}
+        .wpp-radios
+            .form-check
+                input.form-check-input#wpp-auth-password(type='radio', name='wpp-auth', value='password', [(ngModel)]='tab.authMethod')
+                label.form-check-label(for='wpp-auth-password') {{ tab.s('authPassword') }}
+            .form-check
+                input.form-check-input#wpp-auth-key(type='radio', name='wpp-auth', value='publicKey', [(ngModel)]='tab.authMethod')
+                label.form-check-label(for='wpp-auth-key') {{ tab.s('authKey') }}
+    .wpp-field.wpp-half(*ngIf='tab.showRegion')
+        label {{ tab.s('fieldRegion') }}
+        .wpp-radios
+            .form-check
+                input.form-check-input#wpp-region-overseas(type='radio', name='wpp-region', value='overseas', [(ngModel)]='tab.region')
+                label.form-check-label(for='wpp-region-overseas') {{ tab.s('regionOverseas') }}
+            .form-check
+                input.form-check-input#wpp-region-cn(type='radio', name='wpp-region', value='cn', [(ngModel)]='tab.region')
+                label.form-check-label(for='wpp-region-cn') {{ tab.s('regionCn') }}
+
+//- Row: password (or key) | remember / region hint
+.wpp-row(*ngIf='tab.authMethod === "password"')
+    .wpp-field.wpp-half
+        label(for='wpp-password') {{ tab.s('fieldPassword') }}
+        .input-group
+            input.form-control#wpp-password([type]='tab.showPassword ? "text" : "password"', [(ngModel)]='tab.password', autocomplete='off', [placeholder]='tab.hasStoredPassword ? tab.s("passwordStoredPlaceholder") : ""')
+            button.btn.btn-secondary(type='button', (click)='tab.showPassword = !tab.showPassword', [title]='tab.s("fieldPassword")')
+                i.fas.fa-fw([class.fa-eye]='!tab.showPassword', [class.fa-eye-slash]='tab.showPassword')
+        .wpp-error(*ngIf='tab.errors.password') {{ tab.s(tab.errors.password) }}
+        checkbox.d-block.mt-1#wpp-remember([text]='tab.s("rememberPassword")', [(ngModel)]='tab.rememberPassword')
+    .wpp-field.wpp-half(*ngIf='tab.showRegion')
+        .wpp-hint.wpp-label-offset {{ tab.s('regionHint') }}
+.wpp-row(*ngIf='tab.authMethod === "publicKey"')
+    .wpp-field.wpp-half
+        label {{ tab.s('authKey') }}
+        .d-flex.align-items-center
+            button.btn.btn-secondary#wpp-choose-key(type='button', (click)='tab.chooseKey()') {{ tab.s('chooseKey') }}
+            span.ms-2.text-break {{ tab.keyName }}
+        .wpp-error(*ngIf='tab.errors.key') {{ tab.s(tab.errors.key) }}
+        .wpp-hint {{ tab.s('keyPassphraseHint') }}
+    .wpp-field.wpp-half(*ngIf='tab.showRegion')
+        .wpp-hint.wpp-label-offset {{ tab.s('regionHint') }}
+

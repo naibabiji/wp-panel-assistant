@@ -1,0 +1,62 @@
+//- Manage WP Panel (stage 4). Design confirmed by the user on 2026-11-10.
+.wpp-install
+    //- ---------- Step 1: choose a server ----------
+    .wpp-form(*ngIf='step === "form"')
+        h2 {{ s('manageTab') }}
+        p.wpp-hint {{ s('manageIntro') }}
+
+        .wpp-field
+            label(for='wpp-saved') {{ s('savedServers') }}
+            select.form-control#wpp-saved(
+                *ngIf='savedServers.length',
+                [(ngModel)]='selectedServer',
+                (ngModelChange)='pickServer()'
+            )
+                option(value='') {{ s('savedServersPick') }}
+                option(*ngFor='let srv of savedServers', [value]='srv.id') {{ srv.name }}
+            .wpp-hint(*ngIf='!savedServers.length') {{ s('savedServersNone') }}
+
+        wpp-server-form([tab]='this')
+
+        .wpp-actions
+            button.btn.btn-primary#wpp-connect((click)='connect()') {{ s('connectButton') }}
+
+    //- ---------- Step 2: connected (terminal is in the right pane) ----------
+    .wpp-guide(*ngIf='step === "connected"')
+        wpp-conn-state([tab]='this')
+
+        ng-container(*ngIf='state === "disconnected"')
+            .alert.alert-warning#wpp-disconnected {{ s('disconnectedShort') }}
+            .wpp-actions
+                button.btn.btn-primary#wpp-reconnect((click)='retryConnect()') {{ s('reconnect') }}
+                button.btn.btn-secondary((click)='backToForm()') {{ s('switchServer') }}
+
+        ng-container(*ngIf='state === "running" || state === "disconnected"')
+            .wpp-status(*ngIf='state === "running"')
+                span.wpp-dot
+                | {{ s('connectedTo', user.trim() + '@' + hostTrimmed) }}
+                a.ms-auto.wpp-switch#wpp-switch(href='#', (click)='$event.preventDefault(); backToForm()') {{ s('switchServer') }}
+            .wpp-hint.mb-2(*ngIf='!isRoot') {{ s('sudoHintManage') }}
+
+            .wpp-action-grid
+                button.wpp-action(
+                    *ngFor='let a of actions',
+                    [id]='"wpp-action-" + a.id',
+                    [disabled]='state !== "running"',
+                    [class.danger]='a.confirm',
+                    (click)='run(a)'
+                )
+                    span.wpp-action-label {{ s(a.label) }}
+                    span.wpp-action-desc {{ s(a.desc) }}
+
+            ng-container(*ngIf='lastAction')
+                .wpp-last#wpp-last-action
+                    b {{ s('lastAction', s(lastAction.label)) }}
+                    div.mt-1(*ngIf='lastAction.hint') {{ s(lastAction.hint) }}
+                    div.mt-1.text-muted(*ngIf='lastAction.id === "password"') {{ s('copyRightClick') }}
+
+            checkbox.d-block.mt-3#wpp-saved-new(*ngIf='resetPending', [text]='s("savedNewPassword")', [(ngModel)]='savedConfirmed')
+
+            h6.mt-3 {{ s('troubleTitle') }}
+            ul.wpp-trouble
+                li {{ s('troubleNotInstalled') }}

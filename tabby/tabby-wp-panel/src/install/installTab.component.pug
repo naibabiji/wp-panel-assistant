@@ -1,0 +1,95 @@
+//- WP Panel install wizard (stage 3). Design confirmed by the user on 2026-11-10.
+.wpp-install
+    .wpp-steps
+        span([class.active]='step === "form"') ① {{ s('stepForm') }}
+        span.sep —
+        span([class.active]='step === "confirm"') ② {{ s('stepConfirm') }}
+        span.sep —
+        span([class.active]='step === "install"') ③ {{ s('stepInstall') }}
+
+    //- ---------- Step 1: server details ----------
+    .wpp-form(*ngIf='step === "form"')
+        h2 {{ s('installTab') }}
+        .wpp-notice
+            div
+                | {{ s('debianNotice') }}
+                a.ms-1(href='#', (click)='openGuide($event, "reinstall")') {{ s('howToReinstall') }}
+            div {{ s('freshServerNotice') }}
+
+        wpp-server-form([tab]='this')
+
+        .wpp-actions
+            button.btn.btn-primary#wpp-next((click)='next()') {{ s('next') }}
+            span.ms-auto.wpp-hint
+                | {{ s('resumeQuestion') }}
+                a.ms-1#wpp-resume(href='#', (click)='resumeInstall($event)') {{ s('resumeLink') }}
+
+    //- ---------- Step 2: confirm ----------
+    .wpp-form(*ngIf='step === "confirm"')
+        h2 {{ s('confirmTitle', hostTrimmed) }}
+        ol
+            li {{ s('confirmStep1') }}
+            li {{ s('confirmStep2') }}
+            li {{ s('confirmStep3') }}
+        p {{ s('confirmScreen') }}
+        label {{ s('fullCommand') }}
+        pre.wpp-command#wpp-command {{ command }}
+        .alert.alert-warning ⚠ {{ s('credentialsOnce') }}
+        .wpp-actions
+            button.btn.btn-primary#wpp-start((click)='startInstall()') {{ s('startInstall') }}
+            button.btn.btn-secondary#wpp-back((click)='backToForm()') {{ s('back') }}
+
+    //- ---------- Step 3: installing (terminal is in the right pane) ----------
+    .wpp-guide(*ngIf='step === "install"')
+        wpp-conn-state([tab]='this')
+
+        ng-container(*ngIf='state === "disconnected"')
+            .alert.alert-warning#wpp-disconnected {{ s('disconnected') }}
+            .wpp-actions
+                button.btn.btn-primary#wpp-reconnect((click)='retryConnect()') {{ s('reconnectResume') }}
+
+        ng-container(*ngIf='state === "running" || state === "disconnected"')
+            .wpp-status(*ngIf='state === "running" && portState !== "ok"')
+                span.wpp-dot
+                | {{ s('statusRunning') }}
+                span.ms-auto.text-muted {{ s('elapsed') }} {{ elapsed }}
+            .wpp-status#wpp-panel-up(*ngIf='state === "running" && portState === "ok"')
+                i.fas.fa-check-circle.text-success
+                | {{ s('statusPanelUp') }}
+            div {{ s('dontClose') }}
+            div.text-muted {{ s('noSleep') }}
+
+            h6.mt-3 {{ s('nextSteps') }}
+            ol.wpp-next
+                li {{ s('nextStep1') }}
+                li
+                    b {{ s('nextStep2') }}
+                    div.mt-1 {{ s('copyHow') }}
+                    div.mt-1.text-danger {{ s('copyNoCtrlC') }}
+                    div.mt-1.text-muted {{ s('copyRightClick') }}
+                li {{ s('nextStep3') }}
+
+            .wpp-port#wpp-port-status
+                | {{ s('portLabel') }}
+                span.ms-1(*ngIf='portState !== "ok" && portState !== "preexisting"')
+                    i.fas.fa-spinner.fa-spin.me-1
+                    | {{ s('portWaiting') }}
+                span.ms-1.fw-normal#wpp-port-preexisting(*ngIf='portState === "preexisting"') {{ s('portPreexisting') }}
+                span.ms-1.text-success(*ngIf='portState === "ok"')
+                    i.fas.fa-check-circle.me-1
+                    | {{ s('portOk') }}
+            .alert.alert-warning.mt-2#wpp-port-fail(*ngIf='portState === "fail"')
+                | {{ s('portFail') }}
+                a.ms-1(href='#', (click)='openGuide($event, "port")') {{ s('portGuide') }}
+
+            h6.mt-3 {{ s('troubleTitle') }}
+            ul.wpp-trouble
+                li
+                    | {{ s('troubleFail') }}
+                    a.ms-1#wpp-reinstall(href='#', (click)='$event.preventDefault(); reinstall()') {{ s('reinstall') }}
+                li {{ s('troubleMenu') }}
+                li
+                    | {{ s('troublePort') }}
+                    a.ms-1#wpp-check-port(href='#', (click)='$event.preventDefault(); checkPortNow()') {{ s('checkPort') }}
+
+            checkbox.d-block.mt-3#wpp-saved([text]='s("savedCheckbox")', [(ngModel)]='savedConfirmed')
