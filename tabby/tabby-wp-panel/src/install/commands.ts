@@ -32,15 +32,20 @@ const SCREENRC = 'printf "termcapinfo xterm* ti@:te@\\ndefscrollback 10000\\n" >
 
 /**
  * Check, then install only if the check exits 0 (exit codes per WP Panel --check contract).
- * pipefail: a failed download fails the pipeline instead of bash exiting 0 on empty input (review WPPA-002).
+ * - Check stage: only bash's exit code counts. --check exits as soon as the checks are done without reading the rest
+ *   of the script, so wget then fails writing to the closed pipe (exit 3); with pipefail that turned every passing
+ *   check into a failure (found by the user on a real server, 2026-11-10).
+ * - Install stage: pipefail, so a failed download fails instead of bash exiting 0 on empty input (review WPPA-002).
+ *   If the check stage's download failed, bash got nothing and exits 0, but the installer itself runs the same
+ *   preflight checks before changing the system, and a second failed download shows the message.
  */
 export function checkAndInstall (region: Region, fake: boolean): string {
     if (fake) {
         // No quotes: this text is embedded in bash -c "..." and sudo bash -c '...'.
-        return `set -o pipefail; echo FAKE check result: PASS && bash /opt/fake-install.sh || ${NOT_COMPLETED}`
+        return `echo FAKE check result: PASS && (set -o pipefail; bash /opt/fake-install.sh) || ${NOT_COMPLETED}`
     }
     const url = INSTALL_URLS[region]
-    return `set -o pipefail; ${WGET} ${url} | bash -s -- --check && ${WGET} ${url} | bash || ${NOT_COMPLETED}`
+    return `${WGET} ${url} | bash -s -- --check && (set -o pipefail; ${WGET} ${url} | bash) || ${NOT_COMPLETED}`
 }
 
 function asRoot (cmd: string, isRoot: boolean): string {
