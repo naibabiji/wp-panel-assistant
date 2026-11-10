@@ -31,13 +31,12 @@ const NOT_COMPLETED = 'echo WP Panel 安装没有完成：请查看上方输出�
 const SCREENRC = 'printf "termcapinfo xterm* ti@:te@\\ndefscrollback 10000\\n" > /tmp/wpp-screenrc'
 
 /**
- * Check, then install only if the check exits 0 (exit codes per WP Panel --check contract).
- * - Check stage: only bash's exit code counts. --check exits as soon as the checks are done without reading the rest
- *   of the script, so wget then fails writing to the closed pipe (exit 3); with pipefail that turned every passing
- *   check into a failure (found by the user on a real server, 2026-11-10).
- * - Install stage: pipefail, so a failed download fails instead of bash exiting 0 on empty input (review WPPA-002).
- *   If the check stage's download failed, bash got nothing and exits 0, but the installer itself runs the same
- *   preflight checks before changing the system, and a second failed download shows the message.
+ * Run the official installer. Since WP Panel v1.13.2 the installer runs the same read-only preflight checks itself and
+ * stops before changing anything if they fail (docs/integrations/wp-panel.md), so a separate --check run only printed
+ * the checks twice (user feedback 2026-11-10).
+ * pipefail: a failed download fails the pipeline instead of bash exiting 0 on empty input (review WPPA-002). A plain
+ * --check run must not use pipefail (it exits early and wget then fails writing to the closed pipe); this command no
+ * longer uses --check.
  */
 export function checkAndInstall (region: Region, fake: boolean): string {
     if (fake) {
@@ -45,7 +44,7 @@ export function checkAndInstall (region: Region, fake: boolean): string {
         return `echo FAKE check result: PASS && (set -o pipefail; bash /opt/fake-install.sh) || ${NOT_COMPLETED}`
     }
     const url = INSTALL_URLS[region]
-    return `${WGET} ${url} | bash -s -- --check && (set -o pipefail; ${WGET} ${url} | bash) || ${NOT_COMPLETED}`
+    return `(set -o pipefail; ${WGET} ${url} | bash) || ${NOT_COMPLETED}`
 }
 
 function asRoot (cmd: string, isRoot: boolean): string {
