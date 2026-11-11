@@ -1,9 +1,9 @@
 {
-  "version": "0.1.0",
+  "version": "0.1.1",
   "notes": {
-    "zh": "首个公开版本。",
-    "en": "First public release."
+    "zh": "安装程序显示隐私说明；不再卸载旧版 Tabby。",
+    "en": "The installer shows the privacy notice and no longer uninstalls an old Tabby."
   },
-  "github": "https://github.com/naibabiji/wp-panel-assistant/releases/tag/v0.1.0",
+  "github": "https://github.com/naibabiji/wp-panel-assistant/releases/tag/v0.1.1",
   "website": "https://wp-panel.org/assistant/"
 }
